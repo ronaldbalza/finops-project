@@ -16,6 +16,9 @@
 		"wrangler": "^4.20.3"
 	},
 	"dependencies": {
-		"hono": "^4.8.1"
+		"@hono/node-server": "^1.14.4",
+		"@types/pg": "^8.15.4",
+		"hono": "^4.8.1",
+		"pg": "^8.16.2"
 	}
 }
