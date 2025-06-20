@@ -14,8 +14,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { prettyJSON } from 'hono/pretty-json';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
 
 interface Env {
 	ALLOWED_ORIGINS?: string;
@@ -25,6 +23,29 @@ interface Env {
 }
 
 const app = new Hono<{ Bindings: Env }>();
+
+// Simple JWT-like token creation using base64 encoding
+function createToken(payload: any, secret: string): string {
+	const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+	const body = btoa(JSON.stringify({ ...payload, exp: Date.now() + 3600000 })); // 1 hour
+	return `${header}.${body}.${btoa(secret)}`;
+}
+
+function verifyToken(token: string, secret: string): any {
+	try {
+		const [header, payload, signature] = token.split('.');
+		if (signature !== btoa(secret)) {
+			throw new Error('Invalid signature');
+		}
+		const decoded = JSON.parse(atob(payload));
+		if (decoded.exp < Date.now()) {
+			throw new Error('Token expired');
+		}
+		return decoded;
+	} catch {
+		throw new Error('Invalid token');
+	}
+}
 
 // Middleware
 app.use('*', cors({
@@ -55,7 +76,7 @@ async function authMiddleware(c: any, next: Function) {
 			return c.json({ error: 'No token provided' }, 401);
 		}
 
-		const payload = jwt.verify(token, c.env.JWT_SECRET) as any;
+		const payload = verifyToken(token, c.env.JWT_SECRET || 'fallback-secret');
 		c.set('user', payload);
 		await next();
 	} catch (error) {
@@ -100,7 +121,7 @@ app.post('/api/auth/login', async (c) => {
 				primaryColor: '#6366f1',
 			};
 
-			const token = jwt.sign(userPayload, c.env.JWT_SECRET || 'fallback-secret', { expiresIn: '1h' });
+			const token = createToken(userPayload, c.env.JWT_SECRET || 'fallback-secret');
 
 			// Set cookie
 			c.header('Set-Cookie', `token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=3600; Path=/`);

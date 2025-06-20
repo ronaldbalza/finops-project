@@ -17,12 +17,6 @@
 	},
 	"dependencies": {
 		"@hono/node-server": "^1.14.4",
-		"@types/bcryptjs": "^2.4.6",
-		"@types/jsonwebtoken": "^9.0.10",
-		"@types/pg": "^8.15.4",
-		"bcryptjs": "^3.0.2",
-		"hono": "^4.8.1",
-		"jsonwebtoken": "^9.0.2",
-		"pg": "^8.16.2"
+		"hono": "^4.8.1"
 	}
 }
