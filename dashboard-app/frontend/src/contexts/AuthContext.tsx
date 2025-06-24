@@ -43,7 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (data: AuthData & { token: string }) => {
     const { token, ...userData } = data;
     setAuth(userData);
-    sessionStorage.setItem('auth', JSON.stringify(userData));
+    
+    // Store auth data with token in sessionStorage for Authorization header fallback
+    const authDataWithToken = { ...userData, token };
+    sessionStorage.setItem('auth', JSON.stringify(authDataWithToken));
+    
+    console.log('Stored auth data with token in sessionStorage');
     
     // Only set the cookie if it's a real token (not our dummy token for in-memory updates)
     if (token !== 'dummy') {
@@ -80,10 +85,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authFetch: typeof fetch = async (input, init = {}) => {
     const headers = new Headers(init?.headers);
     
+    // Try to get token from localStorage as fallback
+    const stored = sessionStorage.getItem('auth');
+    if (stored) {
+      try {
+        const authData = JSON.parse(stored);
+        if (authData.token) {
+          headers.set('Authorization', `Bearer ${authData.token}`);
+          console.log('Added Authorization header with token from sessionStorage');
+        }
+      } catch (e) {
+        console.warn('Failed to parse stored auth data:', e);
+      }
+    }
+    
     try {
       const response = await fetch(input, {
         ...init,
-        credentials: 'include', // Automatically sends cookies
+        credentials: 'include', // Still try cookies
         headers
       });
 

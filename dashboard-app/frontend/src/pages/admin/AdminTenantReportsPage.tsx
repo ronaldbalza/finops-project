@@ -138,7 +138,12 @@ function ReportPermissionsModal({
       console.log(`Permission ${hasAccess ? 'revoked' : 'granted'} for user ${userId} on report ${report.id}`);
     } catch (error) {
       console.error('Error updating permission:', error);
-      showToast('❌ Failed to update permissions', 'error');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update permissions';
+      if (errorMessage.includes('not found') && errorMessage.includes('sync reports first')) {
+        showToast('❌ Report not found in database. Please sync reports first using the "Sync Reports" button.', 'error');
+      } else {
+        showToast('❌ Failed to update permissions: ' + errorMessage, 'error');
+      }
     } finally {
       setSaving(false);
     }
@@ -276,6 +281,7 @@ export default function AdminTenantReportsPage() {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10;
+  const [syncing, setSyncing] = useState(false);
 
   // New state for permissions modal
   const [permissionsModal, setPermissionsModal] = useState({
@@ -316,6 +322,38 @@ export default function AdminTenantReportsPage() {
   // New function to handle closing permissions modal
   const closePermissionsModal = () => {
     setPermissionsModal({ isOpen: false, report: null });
+  };
+
+  // Function to sync reports from Power BI to database
+  const syncReports = async () => {
+    if (!tenant?.powerBiGroupId) return;
+    
+    setSyncing(true);
+    try {
+      const response = await authFetch(`${API_BASE_URL}/api/admin/powerbi/reports/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          groupId: tenant.powerBiGroupId, 
+          tenantId: tenantId 
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        showToast(`✅ ${result.message}: ${result.summary.created} created, ${result.summary.updated} updated`, 'success');
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        throw new Error(result.error || 'Failed to sync reports');
+      }
+    } catch (error) {
+      console.error('Error syncing reports:', error);
+      showToast('❌ Failed to sync reports. ' + (error instanceof Error ? error.message : ''), 'error');
+    } finally {
+      setSyncing(false);
+    }
   };
 
   // Filtered and paginated reports
@@ -453,6 +491,22 @@ export default function AdminTenantReportsPage() {
                     <span className="mr-2">📊</span>
                     Reports ({filteredReports.length})
                   </h2>
+                  <button
+                    onClick={syncReports}
+                    disabled={syncing}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200"
+                  >
+                    {syncing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Syncing...
+                      </>
+                    ) : (
+                      <>
+                        🔄 Sync Reports
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -484,9 +538,27 @@ export default function AdminTenantReportsPage() {
                               <span className="text-2xl">📊</span>
                             </div>
                             <h3 className="text-lg font-medium text-white mb-2">No reports found</h3>
-                            <p className="text-slate-400">
+                            <p className="text-slate-400 mb-4">
                               {search ? 'Try adjusting your search criteria' : 'No Power BI reports are available for this tenant'}
                             </p>
+                            {!search && (
+                              <button
+                                onClick={syncReports}
+                                disabled={syncing}
+                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200"
+                              >
+                                {syncing ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    Syncing reports...
+                                  </>
+                                ) : (
+                                  <>
+                                    🔄 Sync Reports from Power BI
+                                  </>
+                                )}
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
