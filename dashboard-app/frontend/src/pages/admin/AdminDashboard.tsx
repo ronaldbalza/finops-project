@@ -134,6 +134,12 @@ export default function AdminDashboard() {
             href="/admin/users"
           />
           <QuickActionCard 
+            title="Data Integration"
+            description="Configure data sources and integrations"
+            icon="🔗"
+            href="/admin/data-integration"
+          />
+          <QuickActionCard 
             title="System Analytics"
             description="View detailed system usage analytics"
             icon="📊"

@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminTenantsPage from './pages/admin/AdminTenantsPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminDataIntegrationPage from './pages/admin/AdminDataIntegrationPage';
 import TenantDashboard from './pages/tenant/TenantDashboard';
 import TenantUsersPage from './pages/tenant/TenantUsersPage';
 import TenantReportList from './pages/tenant/TenantReportList';
@@ -63,6 +64,12 @@ export default function App() {
         path="/admin/users"
         element={
           <ProtectedRoute allow={['superadmin']} element={<Layout><AdminUsersPage /></Layout>} />
+        }
+      />
+      <Route
+        path="/admin/data-integration"
+        element={
+          <ProtectedRoute allow={['superadmin']} element={<Layout><AdminDataIntegrationPage /></Layout>} />
         }
       />
 
