@@ -98,6 +98,12 @@ function ReportPermissionsModal({
         throw new Error('Workspace ID not found');
       }
 
+      if (!tenantId) {
+        throw new Error('Tenant ID is missing');
+      }
+
+      console.log('Permission toggle debug:', { userId, reportId: report.id, workspaceId, tenantId, hasAccess });
+
       if (hasAccess) {
         // Revoke permission
         await authFetch(`${API_BASE_URL}/api/powerbi/permissions/revoke`, {
@@ -105,8 +111,9 @@ function ReportPermissionsModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId,
-            reportId: report.id,
-            workspaceId
+            reportId: report.id, // This is the Power BI report ID
+            workspaceId,
+            tenantId
           }),
         });
 
@@ -117,15 +124,19 @@ function ReportPermissionsModal({
         showToast('✅ Access removed successfully', 'success');
       } else {
         // Grant permission
+        const requestBody = {
+          userId,
+          reportId: report.id, // This is the Power BI report ID
+          workspaceId,
+          tenantId,
+          canView: true
+        };
+        console.log('Grant permission request body:', requestBody);
+        
         await authFetch(`${API_BASE_URL}/api/powerbi/permissions/grant`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            reportId: report.id,
-            workspaceId,
-            canView: true
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         // Update local state
@@ -271,18 +282,60 @@ function ReportPermissionsModal({
 }
 
 export default function AdminTenantReportsPage() {
-  const { tenantId } = useParams();
+  const params = useParams<{ tenantId: string }>();
+  const { tenantId } = params;
   const navigate = useNavigate();
   const { authFetch } = useAuth();
   const { showToast } = useToast();
+
+  console.log('AdminTenantReportsPage - all params:', params);
+  console.log('AdminTenantReportsPage - tenantId from useParams:', tenantId);
+  console.log('AdminTenantReportsPage - tenantId type:', typeof tenantId);
+
+  // Early return if tenantId is missing
+  if (!tenantId) {
+    console.error('tenantId is undefined, redirecting to admin tenants page');
+    return (
+      <div className="min-h-screen bg-slate-900">
+        <div className="bg-slate-800 text-white p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">
+                Invalid Tenant ID
+              </h1>
+              <p className="text-slate-300">
+                The tenant ID is missing from the URL
+              </p>
+            </div>
+            <div className="bg-slate-700 px-3 py-1 rounded-lg text-sm text-slate-300">
+              Super Admin
+            </div>
+          </div>
+        </div>
+        <div className="p-8">
+          <div className="bg-slate-800 rounded-lg p-8 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">❌</span>
+            </div>
+            <h3 className="text-lg font-medium text-white mb-2">Invalid URL</h3>
+            <p className="text-slate-400 mb-4">The tenant ID is missing from the URL.</p>
+            <button
+              onClick={() => navigate('/admin/tenants')}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              ← Back to Tenants
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const [tenant, setTenant] = useState<any>(null);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const reportsPerPage = 10;
-  const [syncing, setSyncing] = useState(false);
-
   // New state for permissions modal
   const [permissionsModal, setPermissionsModal] = useState({
     isOpen: false,
@@ -324,37 +377,7 @@ export default function AdminTenantReportsPage() {
     setPermissionsModal({ isOpen: false, report: null });
   };
 
-  // Function to sync reports from Power BI to database
-  const syncReports = async () => {
-    if (!tenant?.powerBiGroupId) return;
-    
-    setSyncing(true);
-    try {
-      const response = await authFetch(`${API_BASE_URL}/api/admin/powerbi/reports/sync`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          groupId: tenant.powerBiGroupId, 
-          tenantId: tenantId 
-        }),
-      });
 
-      const result = await response.json();
-      
-      if (response.ok) {
-        showToast(`✅ ${result.message}: ${result.summary.created} created, ${result.summary.updated} updated`, 'success');
-        // Refresh the page to show updated data
-        window.location.reload();
-      } else {
-        throw new Error(result.error || 'Failed to sync reports');
-      }
-    } catch (error) {
-      console.error('Error syncing reports:', error);
-      showToast('❌ Failed to sync reports. ' + (error instanceof Error ? error.message : ''), 'error');
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   // Filtered and paginated reports
   const filteredReports = reports.filter((r: any) => r.name.toLowerCase().includes(search.toLowerCase()));
@@ -491,22 +514,6 @@ export default function AdminTenantReportsPage() {
                     <span className="mr-2">📊</span>
                     Reports ({filteredReports.length})
                   </h2>
-                  <button
-                    onClick={syncReports}
-                    disabled={syncing}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200"
-                  >
-                    {syncing ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Syncing...
-                      </>
-                    ) : (
-                      <>
-                        🔄 Sync Reports
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
 
@@ -541,24 +548,7 @@ export default function AdminTenantReportsPage() {
                             <p className="text-slate-400 mb-4">
                               {search ? 'Try adjusting your search criteria' : 'No Power BI reports are available for this tenant'}
                             </p>
-                            {!search && (
-                              <button
-                                onClick={syncReports}
-                                disabled={syncing}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200"
-                              >
-                                {syncing ? (
-                                  <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                    Syncing reports...
-                                  </>
-                                ) : (
-                                  <>
-                                    🔄 Sync Reports from Power BI
-                                  </>
-                                )}
-                              </button>
-                            )}
+
                           </div>
                         </td>
                       </tr>
@@ -654,15 +644,17 @@ export default function AdminTenantReportsPage() {
       </div>
 
       {/* Permissions Modal */}
-      <ReportPermissionsModal
-        isOpen={permissionsModal.isOpen}
-        onClose={closePermissionsModal}
-        report={permissionsModal.report}
-        tenantId={tenantId!}
-        tenant={tenant}
-        authFetch={authFetch}
-        showToast={showToast}
-      />
+      {tenantId && (
+        <ReportPermissionsModal
+          isOpen={permissionsModal.isOpen}
+          onClose={closePermissionsModal}
+          report={permissionsModal.report}
+          tenantId={tenantId}
+          tenant={tenant}
+          authFetch={authFetch}
+          showToast={showToast}
+        />
+      )}
     </div>
   );
 } 
