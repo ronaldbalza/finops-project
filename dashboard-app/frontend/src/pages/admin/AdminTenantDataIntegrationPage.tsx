@@ -28,18 +28,10 @@ interface Integration {
   fabricDatasetId?: string;
 }
 
-interface Tenant {
-  id: string;
-  name: string;
-  adminEmail: string;
-  status: string;
-}
-
 export default function AdminTenantDataIntegrationPage() {
   const { tenantId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +42,6 @@ export default function AdminTenantDataIntegrationPage() {
   useEffect(() => {
     if (tenantId) {
       Promise.all([
-        fetchTenant(),
         fetchDataSources(),
         fetchTenantIntegrations()
       ]).then(() => {
@@ -65,20 +56,6 @@ export default function AdminTenantDataIntegrationPage() {
       });
     }
   }, [tenantId, searchParams]);
-
-  const fetchTenant = async () => {
-    try {
-      const response = await authFetch(`${API_BASE_URL}/api/admin/tenants/${tenantId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch tenant');
-      }
-      const tenantData = await response.json();
-      setTenant(tenantData);
-    } catch (error) {
-      console.error('Error fetching tenant:', error);
-      setError('Failed to load tenant information');
-    }
-  };
 
   const fetchDataSources = async () => {
     try {
@@ -216,10 +193,10 @@ export default function AdminTenantDataIntegrationPage() {
             </button>
           </div>
           <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200">
-            Data Integration - {tenant?.name}
+            Data Integration
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Manage external data sources for this tenant
+            Connect and manage external data sources
           </p>
         </div>
         <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
@@ -233,53 +210,6 @@ export default function AdminTenantDataIntegrationPage() {
           <div className="flex items-center">
             <span className="text-red-600 dark:text-red-400 text-lg mr-3">⚠️</span>
             <p className="text-red-700 dark:text-red-300">{error}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Tenant Info */}
-      {tenant && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">Tenant Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Organization</p>
-              <p className="text-slate-800 dark:text-slate-200">{tenant.name}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Admin Email</p>
-              <p className="text-slate-800 dark:text-slate-200">{tenant.adminEmail}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Status</p>
-              <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                tenant.status === 'active' 
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-              }`}>
-                {tenant.status}
-              </span>
-            </div>
-          </div>
-          
-          {/* Microsoft Fabric Data Warehouse Info */}
-          <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center">
-              <span className="mr-2">🏭</span>
-              Microsoft Fabric Data Warehouse
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-slate-600 dark:text-slate-400">Workspace ID</p>
-                <p className="font-mono text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                  fabric-workspace-{tenantId}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-600 dark:text-slate-400">Credentials Storage</p>
-                <p className="text-slate-800 dark:text-slate-200">Isolated per data source</p>
-              </div>
-            </div>
           </div>
         </div>
       )}
@@ -392,7 +322,11 @@ function DataSourceCard({ source, onConnect, getCategoryIcon, getStatusColor }: 
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center shadow-sm">
-            <span className="text-lg">{source.icon}</span>
+            {source.icon.startsWith('http') ? (
+              <img src={source.icon} alt={source.name} className="w-6 h-6" />
+            ) : (
+              <span className="text-lg">{source.icon}</span>
+            )}
           </div>
           <div>
             <h3 className="font-medium text-slate-800 dark:text-slate-200">{source.name}</h3>
