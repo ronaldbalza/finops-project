@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../utils/api';
@@ -24,6 +24,8 @@ interface Integration {
   status: 'active' | 'inactive' | 'error';
   lastSync: string;
   createdAt: string;
+  fabricWorkspaceId?: string;
+  fabricDatasetId?: string;
 }
 
 interface Tenant {
@@ -36,6 +38,7 @@ interface Tenant {
 export default function AdminTenantDataIntegrationPage() {
   const { tenantId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -50,9 +53,18 @@ export default function AdminTenantDataIntegrationPage() {
         fetchTenant(),
         fetchDataSources(),
         fetchTenantIntegrations()
-      ]);
+      ]).then(() => {
+        // Handle success message from OAuth callback
+        const success = searchParams.get('success');
+        const source = searchParams.get('source');
+        if (success === 'connected' && source) {
+          showToast(`✅ ${source} integration connected successfully! Credentials stored in Microsoft Fabric Data Warehouse.`, 'success');
+          // Clean up URL
+          navigate(`/admin/tenants/${tenantId}/data-integration`, { replace: true });
+        }
+      });
     }
-  }, [tenantId]);
+  }, [tenantId, searchParams]);
 
   const fetchTenant = async () => {
     try {
@@ -79,6 +91,21 @@ export default function AdminTenantDataIntegrationPage() {
     } catch (error) {
       console.error('Error fetching data sources:', error);
       setError('Failed to load data sources');
+    }
+  };
+
+  // Helper function to get source status based on integrations
+  const getSourceStatus = (sourceId: string): 'available' | 'connected' | 'error' => {
+    const integration = integrations.find(i => i.sourceId === sourceId);
+    if (!integration) return 'available';
+    
+    switch (integration.status) {
+      case 'active':
+        return 'connected';
+      case 'error':
+        return 'error';
+      default:
+        return 'available';
     }
   };
 
@@ -214,7 +241,7 @@ export default function AdminTenantDataIntegrationPage() {
       {tenant && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">Tenant Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
               <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Organization</p>
               <p className="text-slate-800 dark:text-slate-200">{tenant.name}</p>
@@ -234,6 +261,26 @@ export default function AdminTenantDataIntegrationPage() {
               </span>
             </div>
           </div>
+          
+          {/* Microsoft Fabric Data Warehouse Info */}
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center">
+              <span className="mr-2">🏭</span>
+              Microsoft Fabric Data Warehouse
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-slate-600 dark:text-slate-400">Workspace ID</p>
+                <p className="font-mono text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
+                  fabric-workspace-{tenantId}
+                </p>
+              </div>
+              <div>
+                <p className="text-slate-600 dark:text-slate-400">Credentials Storage</p>
+                <p className="text-slate-800 dark:text-slate-200">Isolated per data source</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -243,15 +290,21 @@ export default function AdminTenantDataIntegrationPage() {
           Available Data Sources
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {dataSources.map((source) => (
-            <DataSourceCard
-              key={source.id}
-              source={source}
-              onConnect={() => handleSourceConnect(source)}
-              getCategoryIcon={getCategoryIcon}
-              getStatusColor={getStatusColor}
-            />
-          ))}
+          {dataSources.map((source) => {
+            const sourceWithStatus = {
+              ...source,
+              status: getSourceStatus(source.id)
+            };
+            return (
+              <DataSourceCard
+                key={source.id}
+                source={sourceWithStatus}
+                onConnect={() => handleSourceConnect(source)}
+                getCategoryIcon={getCategoryIcon}
+                getStatusColor={getStatusColor}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -267,6 +320,7 @@ export default function AdminTenantDataIntegrationPage() {
                 <tr className="border-b border-slate-200 dark:border-slate-700">
                   <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Source</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Fabric Dataset</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Last Sync</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Connected</th>
                   <th className="text-right py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Actions</th>
@@ -287,6 +341,18 @@ export default function AdminTenantDataIntegrationPage() {
                       <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(integration.status)}`}>
                         {integration.status}
                       </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="text-slate-600 dark:text-slate-400">
+                        {integration.fabricDatasetId ? (
+                          <div>
+                            <p className="font-mono text-xs">{integration.fabricDatasetId}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-500">Microsoft Fabric</p>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">Not configured</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                       {new Date(integration.lastSync).toLocaleDateString()}
