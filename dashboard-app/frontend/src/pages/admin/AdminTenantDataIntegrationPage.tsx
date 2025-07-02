@@ -317,17 +317,61 @@ interface DataSourceCardProps {
 }
 
 function DataSourceCard({ source, onConnect, getCategoryIcon, getStatusColor }: DataSourceCardProps) {
+  const getLogoDisplay = (icon: string, name: string) => {
+    // Handle text-based logos with brand colors
+    switch (icon) {
+      case 'XERO':
+        return (
+          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+            <span className="text-white font-bold text-xs">XERO</span>
+          </div>
+        );
+      case 'XPM':
+        return (
+          <div className="w-10 h-10 bg-blue-700 rounded-lg flex items-center justify-center shadow-sm">
+            <span className="text-white font-bold text-xs">XPM</span>
+          </div>
+        );
+      case 'SF':
+        return (
+          <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center shadow-sm">
+            <span className="text-white font-bold text-xs">SF</span>
+          </div>
+        );
+      case 'QB':
+        return (
+          <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center shadow-sm">
+            <span className="text-white font-bold text-xs">QB</span>
+          </div>
+        );
+      default:
+        // Fallback for URLs or other formats
+        if (icon.startsWith('http')) {
+          return (
+            <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center shadow-sm">
+              <img src={icon} alt={name} className="w-6 h-6" onError={(e) => {
+                // Fallback to first two letters if image fails
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement!.innerHTML = `<span class="text-slate-600 dark:text-slate-300 font-bold text-xs">${name.substring(0, 2).toUpperCase()}</span>`;
+              }} />
+            </div>
+          );
+        } else {
+          // For emoji or other text
+          return (
+            <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center shadow-sm">
+              <span className="text-lg">{icon}</span>
+            </div>
+          );
+        }
+    }
+  };
+
   return (
     <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 hover:shadow-md transition-shadow border border-slate-200 dark:border-slate-600">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center shadow-sm">
-            {source.icon.startsWith('http') ? (
-              <img src={source.icon} alt={source.name} className="w-6 h-6" />
-            ) : (
-              <span className="text-lg">{source.icon}</span>
-            )}
-          </div>
+          {getLogoDisplay(source.icon, source.name)}
           <div>
             <h3 className="font-medium text-slate-800 dark:text-slate-200">{source.name}</h3>
             <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(source.status)}`}>
