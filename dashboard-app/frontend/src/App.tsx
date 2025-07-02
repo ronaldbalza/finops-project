@@ -17,6 +17,7 @@ import { useAuth } from './contexts/AuthContext';
 import useTheme from './hooks/useTheme';
 import AdminTenantReportsPage from './pages/admin/AdminTenantReportsPage';
 import AdminTenantReportViewerPage from './pages/admin/AdminTenantReportViewerPage';
+import AdminTenantDataIntegrationPage from './pages/admin/AdminTenantDataIntegrationPage';
 
 
 export default function App() {
@@ -83,6 +84,12 @@ export default function App() {
         path="/admin/tenants/:tenantId/reports/:reportId"
         element={
           <ProtectedRoute allow={['superadmin']} element={<Layout><AdminTenantReportViewerPage /></Layout>} />
+        }
+      />
+      <Route
+        path="/admin/tenants/:tenantId/data-integration"
+        element={
+          <ProtectedRoute allow={['superadmin']} element={<Layout><AdminTenantDataIntegrationPage /></Layout>} />
         }
       />
 
