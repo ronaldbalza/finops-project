@@ -90,28 +90,24 @@ export default function AdminDashboard() {
               value={totalTenants} 
               icon="🏢"
               color="blue"
-              trend={{ value: 12, isPositive: true }}
             />
             <MetricCard 
               label="Active Tenants" 
               value={activeTenants} 
               icon="✅"
               color="green"
-              trend={{ value: 8, isPositive: true }}
             />
             <MetricCard 
               label="Inactive Tenants" 
               value={inactiveTenants} 
               icon="⏸️"
               color="yellow"
-              trend={{ value: 2, isPositive: false }}
             />
             <MetricCard 
               label="Total Users" 
               value={totalUserCount} 
               icon="👥"
               color="purple"
-              trend={{ value: 15, isPositive: true }}
             />
           </>
         )}
@@ -210,7 +206,6 @@ function SkeletonCard() {
     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 animate-pulse">
       <div className="flex items-center justify-between mb-4">
         <div className="w-12 h-12 bg-slate-200 dark:bg-slate-600 rounded-lg"></div>
-        <div className="w-12 h-4 bg-slate-200 dark:bg-slate-600 rounded"></div>
       </div>
       <div>
         <div className="h-4 bg-slate-200 dark:bg-slate-600 rounded w-2/3 mb-2"></div>

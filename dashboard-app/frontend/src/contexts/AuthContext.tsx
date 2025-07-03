@@ -134,10 +134,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = () => {
       const stored = sessionStorage.getItem('auth');
-      if (!stored) return;
+      
+      if (!stored) {
+        return;
+      }
 
       try {
         const parsed = JSON.parse(stored);
+        
         const isValid = 
           parsed &&
           typeof parsed.email === 'string' &&
@@ -154,7 +158,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           logout();
         }
-      } catch {
+      } catch (error) {
+        console.error('AuthContext: Error parsing auth data:', error);
         logout();
       }
     };

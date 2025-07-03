@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import Layout from './components/Layout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminTenantsPage from './pages/admin/AdminTenantsPage';
@@ -18,6 +19,46 @@ import useTheme from './hooks/useTheme';
 import AdminTenantReportsPage from './pages/admin/AdminTenantReportsPage';
 import AdminTenantReportViewerPage from './pages/admin/AdminTenantReportViewerPage';
 import AdminTenantDataIntegrationPage from './pages/admin/AdminTenantDataIntegrationPage';
+
+// OAuth callback handler component
+function OAuthCallbackHandler() {
+  const [searchParams] = useSearchParams();
+  const { login } = useAuth();
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const redirect = searchParams.get('redirect') || '/admin';
+
+    if (token) {
+      console.log('OAuth callback: Authenticating user with token...');
+      const authData = {
+        id: 'oauth-superadmin',
+        email: 'oauth@system.admin',
+        type: 'superadmin' as const,
+        roles: ['superadmin'],
+        token: token
+      };
+      
+      login(authData);
+      console.log('OAuth callback: User authenticated, redirecting to:', redirect);
+      
+      // Redirect after authentication
+      window.location.href = redirect;
+    } else {
+      console.error('OAuth callback: No token found, redirecting to login');
+      window.location.href = '/login';
+    }
+  }, [searchParams, login]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="text-white p-4 text-center">
+        <div className="text-2xl mb-2">🔐</div>
+        <div>Completing OAuth authentication...</div>
+      </div>
+    </div>
+  );
+}
 
 
 export default function App() {
@@ -124,6 +165,14 @@ export default function App() {
           <ProtectedRoute allow={['Admin']} element={<Layout><TenantSettingsPage /></Layout>} />
         }
       />
+
+      {/* OAuth callback handler for automatic authentication */}
+      <Route 
+        path="/oauth/callback" 
+        element={<OAuthCallbackHandler />} 
+      />
+
+
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" />} />
