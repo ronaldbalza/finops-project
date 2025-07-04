@@ -13,6 +13,7 @@ type User = {
   id: string;
   email: string;
   roles: { name: Role }[];
+  lastLoggedIn: string | null;
 };
 
 export default function AdminUsersPage() {
@@ -371,6 +372,9 @@ export default function AdminUsersPage() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Role
                   </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Last Logged In
+                  </th>
                   <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Actions
                   </th>
@@ -379,11 +383,11 @@ export default function AdminUsersPage() {
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {loading ? (
                   Array.from({ length: usersPerPage }).map((_, i) => (
-                    <SkeletonRow key={i} columns={3} />
+                    <SkeletonRow key={i} columns={4} />
                   ))
                 ) : paginatedUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center">
+                    <td colSpan={4} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center space-y-3">
                         <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
                           <span className="text-2xl">👤</span>
@@ -426,6 +430,20 @@ export default function AdminUsersPage() {
                             {user.roles.map(r => r.name).join(', ')}
                           </span>
                         )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          {user.lastLoggedIn 
+                            ? new Date(user.lastLoggedIn).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : 'Never'
+                          }
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         {editingUserId === user.id ? (
