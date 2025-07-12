@@ -48,51 +48,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const authDataWithToken = { ...userData, token };
     sessionStorage.setItem('auth', JSON.stringify(authDataWithToken));
     
-    console.log('Stored auth data with token in sessionStorage');
-    
     // Only set the cookie if it's a real token (not our dummy token for in-memory updates)
     if (token !== 'dummy') {
-      // Set cookie (cannot use HttpOnly from JavaScript)
+      // Improved cookie security - use appropriate SameSite setting based on environment
+      const isSecure = window.location.protocol === 'https:';
+      const sameSite = isSecure ? 'Strict' : 'Lax'; // Use Strict for HTTPS, Lax for HTTP
+      
       const cookieOptions = [
         `token=${token}`,
         'Path=/',
-        'SameSite=None', // Changed from Strict to None for cross-domain
-        'Secure', // Required when SameSite=None
+        `SameSite=${sameSite}`,
+        ...(isSecure ? ['Secure'] : []), // Only set Secure flag for HTTPS
         `Max-Age=${60 * 60}` // 1 hour expiration
       ].join('; ');
       
       document.cookie = cookieOptions;
-      console.log('JWT token cookie set:', token.substring(0, 20) + '...');
-      console.log('Cookie options:', cookieOptions);
       
-      // Verify cookie was set
-      setTimeout(() => {
-        const cookieValue = document.cookie.split(';').find(c => c.trim().startsWith('token='));
-        console.log('Cookie verification after 100ms:', cookieValue ? 'SET' : 'NOT SET');
-        if (cookieValue) {
-          console.log('Cookie value:', cookieValue.substring(0, 30) + '...');
-        }
-      }, 100);
+      // Verify cookie was set (development only)
+      if (import.meta.env.DEV) {
+        setTimeout(() => {
+          const cookieValue = document.cookie.split(';').find(c => c.trim().startsWith('token='));
+          if (!cookieValue) {
+            console.warn('JWT cookie was not set properly');
+          }
+        }, 100);
+      }
     }
   };
 
   const logout = () => {
     setAuth(null);
     sessionStorage.removeItem('auth');
-    document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    
+    // Clear cookie with proper settings
+    const isSecure = window.location.protocol === 'https:';
+    const sameSite = isSecure ? 'Strict' : 'Lax';
+    const cookieOptions = [
+      'token=',
+      'Path=/',
+      `SameSite=${sameSite}`,
+      ...(isSecure ? ['Secure'] : []),
+      'Expires=Thu, 01 Jan 1970 00:00:01 GMT'
+    ].join('; ');
+    
+    document.cookie = cookieOptions;
   };
 
   const authFetch: typeof fetch = async (input, init = {}) => {
     const headers = new Headers(init?.headers);
     
-    // Try to get token from localStorage as fallback
+    // Try to get token from sessionStorage as fallback
     const stored = sessionStorage.getItem('auth');
     if (stored) {
       try {
         const authData = JSON.parse(stored);
         if (authData.token) {
           headers.set('Authorization', `Bearer ${authData.token}`);
-          console.log('Added Authorization header with token from sessionStorage');
         }
       } catch (e) {
         console.warn('Failed to parse stored auth data:', e);

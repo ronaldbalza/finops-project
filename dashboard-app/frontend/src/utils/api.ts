@@ -2,9 +2,12 @@
 const isDevelopment = import.meta.env.DEV;
 
 // API Base URL Configuration
-export const API_BASE_URL = isDevelopment 
-  ? 'http://localhost:8787' // Local Cloudflare Workers dev server
-  : 'https://backend-api.ronaldbalza23.workers.dev'; // Production Cloudflare Workers URL
+// Use environment variable with fallback for development
+export const API_BASE_URL = import.meta.env.VITE_API_URL || (
+  isDevelopment 
+    ? 'http://localhost:8787' // Local Cloudflare Workers dev server
+    : 'https://backend-api.ronaldbalza23.workers.dev' // Production fallback
+);
 
 // API Response Types
 export interface ApiResponse<T = any> {
@@ -155,7 +158,7 @@ export async function apiRequestWithRetry<T = any>(
   throw lastError;
 }
 
-// Debug logging helper
+// Debug logging helper (only in development)
 export const logApiCall = (endpoint: string, options: RequestInit, response?: any) => {
   if (isDevelopment) {
     console.group(`🌐 API Call: ${options.method || 'GET'} ${endpoint}`);
