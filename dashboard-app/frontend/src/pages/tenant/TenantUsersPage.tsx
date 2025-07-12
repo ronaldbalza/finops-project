@@ -69,8 +69,8 @@ export default function TenantUsersPage() {
       tenantId: auth.tenantId
     });
     
-    // Use the general users endpoint which filters by the authenticated user's tenant
-    const url = `${API_BASE_URL}/api/users`;
+    // Use the tenant-specific users endpoint
+    const url = `${API_BASE_URL}/api/users/tenant/${auth.tenantId}`;
     try {
       const res = await authFetch(url);
       if (!res.ok) {

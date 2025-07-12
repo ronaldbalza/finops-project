@@ -67,7 +67,7 @@ export default function Layout({ children }: LayoutProps) {
           : undefined;
 
       if (previewTenantId && previewTenantId !== 'null') {
-        const res = await authFetch(`${API_BASE_URL}/api/tenants/${previewTenantId}`, {
+        const res = await authFetch(`${API_BASE_URL}/api/admin/tenants/${previewTenantId}`, {
           headers: { 'Cache-Control': 'no-cache' },
         });
         const tenant = await res.json();
