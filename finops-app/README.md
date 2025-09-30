@@ -47,7 +47,7 @@ A cloud-native, multi-tenant FinOps platform leveraging Cloudflare's edge comput
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/ronaldbalza/finops-app.git
 cd finops-app
 ```
 
