@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Read(//c/Users/ronal/**)",
+      "Bash(tree:*)",
+      "Bash(rm:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git fetch:*)",
+      "Bash(gh api:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git remote remove:*)",
+      "Bash(git init:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

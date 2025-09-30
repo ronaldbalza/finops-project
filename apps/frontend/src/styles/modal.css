@@ -1,0 +1,194 @@
+/* Modern Modal Animations */
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modal-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes backdrop-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-fade-in {
+  animation: modal-fade-in 0.3s ease-out forwards;
+}
+
+.animate-fade-out {
+  animation: modal-fade-out 0.25s ease-in forwards;
+}
+
+.animate-backdrop-in {
+  animation: backdrop-fade-in 0.3s ease-out forwards;
+}
+
+.animate-backdrop-out {
+  animation: backdrop-fade-out 0.25s ease-in forwards;
+}
+
+/* Professional Modal Styles */
+.modal-overlay {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.modal-container.dark {
+  background: rgb(30, 41, 59);
+  border-color: rgba(71, 85, 105, 0.3);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(71, 85, 105, 0.3);
+}
+
+/* Enhanced focus states for modal forms */
+.modal-input {
+  transition: all 0.2s ease-in-out;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px 16px;
+  background: white;
+  color: #1f2937;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  background: white;
+}
+
+.modal-input.dark {
+  background: rgb(51, 65, 85);
+  border-color: rgb(71, 85, 105);
+  color: white;
+}
+
+.modal-input.dark:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  background: rgb(51, 65, 85);
+}
+
+/* Modern button styles for modals */
+.modal-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
+  border: none;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.modal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-button-primary {
+  background: linear-gradient(135deg, #1e40af 0%, #0ea5e9 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+}
+
+.modal-button-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8 0%, #0284c7 100%);
+  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.4);
+  transform: translateY(-1px);
+}
+
+.modal-button-secondary {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.modal-button-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.modal-button-secondary.dark {
+  background: rgb(51, 65, 85);
+  color: #cbd5e1;
+  border-color: rgb(71, 85, 105);
+}
+
+.modal-button-secondary.dark:hover:not(:disabled) {
+  background: rgb(71, 85, 105);
+  border-color: rgb(100, 116, 139);
+}
+
+.modal-button-danger {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.modal-button-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Loading spinner for modal buttons */
+.modal-loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
