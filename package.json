@@ -30,13 +30,36 @@
     "db:studio": "pnpm --filter backend db:studio",
     "db:reset": "pnpm --filter backend db:reset",
     "deploy:staging": "turbo run deploy --filter=*[STAGING]",
-    "deploy:prod": "turbo run deploy --filter=*[PROD]"
+    "deploy:prod": "turbo run deploy --filter=*[PROD]",
+    "prepare": "husky install",
+    "commit": "cz",
+    "commitlint": "commitlint --edit"
   },
   "devDependencies": {
+    "@commitlint/cli": "^18.4.4",
+    "@commitlint/config-conventional": "^18.4.4",
     "@types/node": "^20.11.0",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
     "prettier": "^3.2.4",
     "turbo": "^1.12.0",
     "typescript": "^5.3.3"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "repository": {
     "type": "git",

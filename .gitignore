@@ -106,6 +106,7 @@ temp/
 *.pfx
 credentials.json
 service-account.json
+certs/
 
 # Reports
 *.lcov

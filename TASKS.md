@@ -27,17 +27,17 @@
 - [✅] Configure `turbo.json` with build pipelines
 - [✅] Create README.md with setup instructions
 - [✅] Add CLAUDE.md, PLANNING.md, TASKS.md to repository
-- [ ] Set up Conventional Commits and commitlint
-- [ ] Configure Husky for pre-commit hooks
-- [ ] Add LICENSE file (MIT or proprietary)
+- [✅] Set up Conventional Commits and commitlint
+- [✅] Configure Husky for pre-commit hooks
+- [✅] Add LICENSE file (MIT or proprietary)
 
 ### Local Development Setup
 - [✅] Create `docker-compose.yml` with PostgreSQL, Redis, and Mailhog
 - [✅] Set up environment variable templates (`.env.example`)
-- [ ] Configure VS Code workspace settings and recommended extensions
+- [✅] Configure VS Code workspace settings and recommended extensions
 - [✅] Create Makefile for common commands
-- [ ] Set up local SSL certificates for HTTPS development
-- [ ] Configure hosts file for local subdomain testing
+- [✅] Set up local SSL certificates for HTTPS development
+- [✅] Configure hosts file for local subdomain testing
 
 ### Cloudflare Account Setup
 - [ ] Create Cloudflare account and verify domain
