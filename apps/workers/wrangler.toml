@@ -1,0 +1,101 @@
+name = "finops-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-30"
+account_id = "bf901c0125eff22c0914aa7bceec42fc"
+
+# KV Namespaces for session storage
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "047e5ea043aa4559bdb3f66ef7664300"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "aaefdf90e00e45cb8f4f0e78a4f36de3"
+
+# R2 Bucket bindings (Enable R2 in Cloudflare Dashboard first)
+# [[r2_buckets]]
+# binding = "REPORTS"
+# bucket_name = "finops-reports"
+
+# D1 Database bindings
+[[d1_databases]]
+binding = "DB"
+database_name = "finops-edge"
+database_id = "f1e94fea-81bd-4dc9-9e37-f3e59b0bbe02"
+
+# Durable Objects bindings - Using new_sqlite_classes for free plan
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+script_name = "finops-api"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiter"]
+
+# Workers configuration
+[env.production]
+name = "finops-api-production"
+vars = { ENVIRONMENT = "production" }
+
+[[env.production.kv_namespaces]]
+binding = "SESSIONS"
+id = "047e5ea043aa4559bdb3f66ef7664300"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "aaefdf90e00e45cb8f4f0e78a4f36de3"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "finops-edge"
+database_id = "f1e94fea-81bd-4dc9-9e37-f3e59b0bbe02"
+
+[[env.production.durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+script_name = "finops-api-production"
+
+[env.staging]
+name = "finops-api-staging"
+vars = { ENVIRONMENT = "staging" }
+
+[[env.staging.kv_namespaces]]
+binding = "SESSIONS"
+id = "047e5ea043aa4559bdb3f66ef7664300"
+
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "aaefdf90e00e45cb8f4f0e78a4f36de3"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "finops-edge"
+database_id = "f1e94fea-81bd-4dc9-9e37-f3e59b0bbe02"
+
+[[env.staging.durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+script_name = "finops-api-staging"
+
+[env.development]
+name = "finops-api-dev"
+vars = { ENVIRONMENT = "development" }
+
+[[env.development.kv_namespaces]]
+binding = "SESSIONS"
+id = "047e5ea043aa4559bdb3f66ef7664300"
+
+[[env.development.kv_namespaces]]
+binding = "CACHE"
+id = "aaefdf90e00e45cb8f4f0e78a4f36de3"
+
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "finops-edge"
+database_id = "f1e94fea-81bd-4dc9-9e37-f3e59b0bbe02"
+
+[[env.development.durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+script_name = "finops-api-dev"

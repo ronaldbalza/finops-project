@@ -16,7 +16,20 @@
       "Bash(gh api:*)",
       "Bash(git rev-parse:*)",
       "Bash(git remote remove:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(wrangler:*)",
+      "Bash(npm init:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker compose:*)",
+      "Bash(npx prisma init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm create:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(curl:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

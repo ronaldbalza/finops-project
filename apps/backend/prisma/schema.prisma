@@ -1,0 +1,705 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// Core Multi-Tenancy Models
+// ==========================================
+
+model Tenant {
+  id                String    @id @default(cuid())
+  name              String
+  slug              String    @unique
+  subdomain         String?   @unique
+  customDomain      String?   @unique
+
+  // FinOps Settings
+  maturityLevel     MaturityLevel @default(CRAWL)
+  focusEnabled      Boolean   @default(false)
+  allocationTarget  Int       @default(80) // percentage
+  esrTarget         Decimal   @default(0.15) @db.Decimal(5, 4) // 15% savings target
+
+  // Subscription
+  plan              PlanType  @default(TRIAL)
+  status            TenantStatus @default(ACTIVE)
+  trialEndsAt       DateTime?
+
+  // Metadata
+  settings          Json      @default("{}")
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  users             User[]
+  cloudAccounts     CloudAccount[]
+  costData          CostData[]
+  budgets           Budget[]
+  unitMetrics       UnitMetric[]
+  allocations       Allocation[]
+  optimizations     Optimization[]
+  policies          Policy[]
+  alerts            Alert[]
+  reports           Report[]
+  auditLogs         AuditLog[]
+
+  @@index([slug])
+  @@index([subdomain])
+  @@index([status])
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String?
+  avatarUrl         String?
+
+  // OAuth Provider Info
+  provider          AuthProvider
+  providerId        String
+
+  // Multi-tenancy
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // RBAC
+  role              UserRole  @default(VIEWER)
+  permissions       Json      @default("[]")
+
+  // Status
+  status            UserStatus @default(ACTIVE)
+  emailVerified     Boolean   @default(false)
+  lastLoginAt       DateTime?
+
+  // Metadata
+  preferences       Json      @default("{}")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  sessions          Session[]
+  apiKeys           ApiKey[]
+  auditLogs         AuditLog[]
+  alerts            Alert[]
+
+  @@unique([provider, providerId])
+  @@index([email])
+  @@index([tenantId])
+}
+
+model Session {
+  id                String    @id @default(cuid())
+  token             String    @unique
+
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ipAddress         String?
+  userAgent         String?
+
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+model ApiKey {
+  id                String    @id @default(cuid())
+  name              String
+  key               String    @unique
+  hashedKey         String    @unique
+
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  scopes            String[]
+  lastUsedAt        DateTime?
+  expiresAt         DateTime?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([hashedKey])
+  @@index([userId])
+}
+
+// ==========================================
+// Cloud Provider & Cost Models
+// ==========================================
+
+model CloudAccount {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  provider          CloudProvider
+  accountId         String
+  accountName       String
+
+  // Credentials (encrypted)
+  credentials       Json      // Encrypted credentials
+
+  // Configuration
+  regions           String[]  @default([])
+  services          String[]  @default([])
+
+  // Sync Status
+  status            AccountStatus @default(PENDING)
+  lastSyncAt        DateTime?
+  lastSyncError     String?
+
+  // Metadata
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  costData          CostData[]
+
+  @@unique([tenantId, provider, accountId])
+  @@index([tenantId])
+  @@index([status])
+}
+
+model CostData {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  cloudAccountId    String
+  cloudAccount      CloudAccount @relation(fields: [cloudAccountId], references: [id], onDelete: Cascade)
+
+  // FOCUS-compliant fields
+  billedCost        Decimal   @db.Decimal(15, 4)
+  effectiveCost     Decimal   @db.Decimal(15, 4)
+  listCost          Decimal   @db.Decimal(15, 4)
+  contractedCost    Decimal   @db.Decimal(15, 4)
+
+  // Dimensions
+  serviceId         String
+  serviceName       String
+  resourceId        String?
+  resourceName      String?
+  region            String?
+  availabilityZone  String?
+
+  // Time
+  billingPeriod     DateTime  @db.Date
+  usageDate         DateTime  @db.Date
+
+  // Allocation
+  allocated         Boolean   @default(false)
+  allocationKeys    Json?     // Tags for allocation
+  teamId            String?
+  projectId         String?
+
+  // Optimization
+  optimizable       Boolean   @default(false)
+  wasteType         WasteType?
+  savingsOpportunity Decimal? @db.Decimal(15, 4)
+
+  // Metadata
+  tags              Json?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+
+  // Relations
+  allocations       Allocation[]
+
+  @@index([tenantId, usageDate])
+  @@index([cloudAccountId])
+  @@index([serviceId])
+  @@index([allocated])
+  @@index([optimizable])
+}
+
+// ==========================================
+// FinOps Capability Models
+// ==========================================
+
+model Allocation {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  costDataId        String
+  costData          CostData  @relation(fields: [costDataId], references: [id], onDelete: Cascade)
+
+  // Allocation Target
+  targetType        AllocationType
+  targetId          String
+  targetName        String
+
+  // Allocation Details
+  percentage        Decimal   @db.Decimal(5, 2)
+  amount            Decimal   @db.Decimal(15, 4)
+
+  // Metadata
+  method            String    // Tag-based, Account-based, Custom
+  rules             Json?
+  createdAt         DateTime  @default(now())
+
+  @@index([tenantId])
+  @@index([targetType, targetId])
+}
+
+model UnitMetric {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  metricType        String    // cost_per_customer, cost_per_transaction
+  metricName        String
+  value             Decimal   @db.Decimal(15, 4)
+  unit              String
+
+  // Trend
+  previousValue     Decimal?  @db.Decimal(15, 4)
+  trend             TrendDirection @default(STABLE)
+  changePercentage  Decimal?  @db.Decimal(5, 2)
+
+  // Time
+  date              DateTime  @db.Date
+  period            Period
+
+  // Metadata
+  dimensions        Json?     // Additional breakdown dimensions
+  createdAt         DateTime  @default(now())
+
+  @@unique([tenantId, metricType, date, period])
+  @@index([tenantId, metricType, date])
+}
+
+model Budget {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name              String
+  description       String?
+
+  // Budget Configuration
+  amount            Decimal   @db.Decimal(15, 2)
+  currency          String    @default("USD")
+  period            Period
+  startDate         DateTime
+  endDate           DateTime?
+
+  // Scope
+  scope             Json      // Services, accounts, tags to include
+
+  // Tracking
+  currentSpend      Decimal   @default(0) @db.Decimal(15, 2)
+  forecastedSpend   Decimal?  @db.Decimal(15, 2)
+
+  // Alerts
+  alertThresholds   Int[]     @default([50, 80, 100])
+  alertEmails       String[]
+
+  // Status
+  status            BudgetStatus @default(ACTIVE)
+
+  // Metadata
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  alerts            Alert[]
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+model Optimization {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  type              OptimizationType
+  category          OptimizationCategory
+
+  // Details
+  title             String
+  description       String
+
+  // Impact
+  estimatedSavings  Decimal   @db.Decimal(15, 2)
+  savingsPercentage Decimal   @db.Decimal(5, 2)
+  effort            EffortLevel
+  risk              RiskLevel
+
+  // Target
+  resourceType      String
+  resourceId        String?
+  resourceName      String?
+
+  // Action
+  recommendedAction String
+  automatable       Boolean   @default(false)
+
+  // Status
+  status            OptimizationStatus @default(IDENTIFIED)
+  implementedAt     DateTime?
+  realizedSavings   Decimal?  @db.Decimal(15, 2)
+
+  // Metadata
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([tenantId, status])
+  @@index([type])
+}
+
+model Policy {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name              String
+  description       String?
+
+  // Policy Configuration
+  type              PolicyType
+  rules             Json      // Policy rules definition
+
+  // Enforcement
+  enforced          Boolean   @default(false)
+  action            PolicyAction @default(NOTIFY)
+
+  // Scope
+  scope             Json      // Resources/services affected
+
+  // Status
+  status            PolicyStatus @default(ACTIVE)
+
+  // Compliance
+  complianceRate    Decimal?  @db.Decimal(5, 2)
+  lastEvaluatedAt   DateTime?
+
+  // Metadata
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  alerts            Alert[]
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+}
+
+model Alert {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Alert Source
+  type              AlertType
+  severity          Severity
+
+  // Related Entity
+  budgetId          String?
+  budget            Budget?   @relation(fields: [budgetId], references: [id])
+
+  policyId          String?
+  policy            Policy?   @relation(fields: [policyId], references: [id])
+
+  // Alert Details
+  title             String
+  message           String
+
+  // Status
+  status            AlertStatus @default(ACTIVE)
+  acknowledgedAt    DateTime?
+  acknowledgedBy    String?
+  acknowledgedUser  User?     @relation(fields: [acknowledgedBy], references: [id])
+
+  resolvedAt        DateTime?
+
+  // Metadata
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([tenantId, status])
+  @@index([type])
+  @@index([severity])
+}
+
+model Report {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name              String
+  description       String?
+
+  // Report Configuration
+  type              ReportType
+  schedule          ReportSchedule?
+
+  // Content
+  configuration     Json      // Report parameters
+  filters           Json?     // Applied filters
+
+  // Storage
+  storageUrl        String?   // R2 storage URL
+
+  // Status
+  status            ReportStatus @default(PENDING)
+  generatedAt       DateTime?
+  expiresAt         DateTime?
+
+  // Delivery
+  recipients        String[]
+  lastSentAt        DateTime?
+
+  // Metadata
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+}
+
+model AuditLog {
+  id                String    @id @default(cuid())
+
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId            String?
+  user              User?     @relation(fields: [userId], references: [id])
+
+  // Action Details
+  action            String
+  resourceType      String
+  resourceId        String?
+
+  // Change Details
+  changes           Json?
+
+  // Context
+  ipAddress         String?
+  userAgent         String?
+
+  // Metadata
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([userId])
+  @@index([resourceType])
+}
+
+// ==========================================
+// Enums
+// ==========================================
+
+enum MaturityLevel {
+  CRAWL
+  WALK
+  RUN
+}
+
+enum PlanType {
+  TRIAL
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum AuthProvider {
+  GOOGLE
+  MICROSOFT
+  GITHUB
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  ANALYST
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CloudProvider {
+  AWS
+  AZURE
+  GCP
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  ERROR
+  SUSPENDED
+}
+
+enum WasteType {
+  IDLE
+  ORPHANED
+  OVERSIZED
+  UNTAGGED
+  OLD_SNAPSHOTS
+}
+
+enum AllocationType {
+  TEAM
+  PROJECT
+  DEPARTMENT
+  COST_CENTER
+  CUSTOM
+}
+
+enum TrendDirection {
+  UP
+  DOWN
+  STABLE
+}
+
+enum Period {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum BudgetStatus {
+  ACTIVE
+  EXCEEDED
+  COMPLETED
+}
+
+enum OptimizationType {
+  RIGHTSIZING
+  RESERVED_INSTANCES
+  SAVINGS_PLANS
+  SPOT_INSTANCES
+  WASTE_REDUCTION
+  COMMITMENT_OPTIMIZATION
+}
+
+enum OptimizationCategory {
+  RATE
+  USAGE
+  COVERAGE
+  WASTE
+}
+
+enum EffortLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum OptimizationStatus {
+  IDENTIFIED
+  IN_REVIEW
+  APPROVED
+  IN_PROGRESS
+  IMPLEMENTED
+  REJECTED
+}
+
+enum PolicyType {
+  TAGGING
+  BUDGET
+  RESOURCE
+  COMPLIANCE
+  SECURITY
+}
+
+enum PolicyAction {
+  NOTIFY
+  PREVENT
+  REMEDIATE
+}
+
+enum PolicyStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+}
+
+enum AlertType {
+  BUDGET
+  ANOMALY
+  POLICY
+  OPTIMIZATION
+  SYSTEM
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum ReportType {
+  COST_SUMMARY
+  ALLOCATION
+  OPTIMIZATION
+  CHARGEBACK
+  EXECUTIVE
+  CUSTOM
+}
+
+enum ReportSchedule {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum ReportStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+}

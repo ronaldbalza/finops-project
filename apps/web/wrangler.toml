@@ -1,0 +1,28 @@
+name = "finops-platform"
+compatibility_date = "2024-10-01"
+pages_build_output_dir = "dist"
+
+[vars]
+VITE_API_URL = "https://finops-api-production.ronaldbalza23.workers.dev/api/v1"
+VITE_APP_URL = "https://finops-platform.pages.dev"
+
+[env.production]
+vars = {
+  ENVIRONMENT = "production",
+  VITE_API_URL = "https://finops-api-production.ronaldbalza23.workers.dev/api/v1",
+  VITE_APP_URL = "https://finops-platform.pages.dev"
+}
+
+[env.preview]
+vars = {
+  ENVIRONMENT = "staging",
+  VITE_API_URL = "https://finops-api-staging.ronaldbalza23.workers.dev/api/v1",
+  VITE_APP_URL = "https://finops-platform-preview.pages.dev"
+}
+
+[env.development]
+vars = {
+  ENVIRONMENT = "development",
+  VITE_API_URL = "http://localhost:8787/api/v1",
+  VITE_APP_URL = "http://localhost:5173"
+}

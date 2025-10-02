@@ -4,10 +4,10 @@
 
 Building a cloud-native, multi-tenant FinOps platform leveraging Cloudflare's edge computing infrastructure to deliver real-time cloud cost management aligned with the FinOps Foundation Framework 2025. The platform will serve mid-market companies managing $50K-$5M in annual cloud spend, providing enterprise-grade capabilities without enterprise complexity.
 
-**Project Codename**: CloudLens  
-**Target Launch**: Q2 2026 (MVP in Q4 2025)  
-**Framework Compliance**: FinOps Foundation Framework 2025 + FOCUS v1.2  
-**Primary Tech Stack**: React + Cloudflare Workers + PostgreSQL  
+**Project Codename**: CloudLens
+**Target Launch**: Q2 2026 (MVP in Q4 2025)
+**Framework Compliance**: FinOps Foundation Framework 2025 + FOCUS v1.2
+**Primary Tech Stack**: React + Cloudflare Workers + PostgreSQL
 
 ---
 
@@ -81,13 +81,13 @@ graph TB
     subgraph "Global Edge Network"
         CF[Cloudflare CDN<br/>200+ PoPs]
     end
-    
+
     subgraph "Client Applications"
         WEB[React SPA]
         PWA[Progressive Web App]
         API_CLI[API/CLI Access]
     end
-    
+
     subgraph "Edge Computing Layer"
         PAGES[Cloudflare Pages<br/>Static Hosting]
         WORKERS[Workers API<br/>Serverless Functions]
@@ -96,7 +96,7 @@ graph TB
         R2[R2 Storage<br/>Reports & Backups]
         D1[D1 Database<br/>Edge Cache]
     end
-    
+
     subgraph "Core Services"
         AUTH[Auth Service<br/>OAuth 2.0]
         COST[Cost Service<br/>Data Processing]
@@ -104,52 +104,52 @@ graph TB
         REPORT[Reporting Service<br/>Dashboards]
         GOVERN[Governance Service<br/>Policies]
     end
-    
+
     subgraph "Data Persistence"
         PG[(PostgreSQL<br/>Primary DB)]
         PA[Prisma Accelerate<br/>Connection Pool]
         TS[(TimescaleDB<br/>Time-series)]
     end
-    
+
     subgraph "Cloud Integrations"
         AWS[AWS Cost Explorer]
         AZURE[Azure Cost Mgmt]
         GCP[GCP Billing]
     end
-    
+
     subgraph "External Services"
         OAUTH[Google/Microsoft<br/>OAuth]
         SLACK[Slack/Teams]
         STRIPE[Stripe Billing]
     end
-    
+
     WEB --> CF --> PAGES
     PWA --> CF --> PAGES
     API_CLI --> CF --> WORKERS
-    
+
     WORKERS --> AUTH
     WORKERS --> COST
     WORKERS --> OPT
     WORKERS --> REPORT
     WORKERS --> GOVERN
-    
+
     AUTH --> KV
     AUTH --> OAUTH
-    
+
     COST --> DO
     COST --> PA --> PG
     COST --> TS
-    
+
     OPT --> R2
     OPT --> D1
-    
+
     REPORT --> D1
     REPORT --> R2
-    
+
     COST --> AWS
     COST --> AZURE
     COST --> GCP
-    
+
     GOVERN --> SLACK
     WORKERS --> STRIPE
 ```
@@ -202,15 +202,15 @@ interface TenantIsolation {
   // Data Isolation
   database: 'shared_db_row_level_security';
   schema: 'tenant_id_on_every_table';
-  
-  // Compute Isolation  
+
+  // Compute Isolation
   workers: 'shared_with_tenant_context';
   rateLimiting: 'per_tenant_quotas';
-  
+
   // Storage Isolation
   r2Buckets: 'prefix_per_tenant';
   kvNamespaces: 'key_prefix_isolation';
-  
+
   // Network Isolation
   customDomains: 'tenant.finops.app';
   apiKeys: 'tenant_scoped_tokens';
@@ -274,21 +274,21 @@ Styling & UI:
   Tailwind UI: Component library
   HeadlessUI: Accessible components
   Heroicons: Icon set
-  
+
 State Management:
   Zustand: 4.4+ (Lightweight state)
   React Query: 5.0+ (Server state)
-  
+
 Data Visualization:
   D3.js: 7.8+ (Complex visualizations)
   Recharts: 2.10+ (Standard charts)
   Apache ECharts: 5.4+ (Advanced dashboards)
   Visx: Composable D3 components
-  
+
 Forms & Validation:
   React Hook Form: 7.48+
   Zod: 3.22+ (Schema validation)
-  
+
 Development Tools:
   ESLint: Code quality
   Prettier: Code formatting
@@ -303,27 +303,27 @@ Development Tools:
 Runtime & Framework:
   Cloudflare Workers: Edge compute
   Hono: 3.0+ (Web framework for Workers)
-  
+
 Database & ORM:
   PostgreSQL: 15+ (Primary database)
   Prisma: 5.0+ (Type-safe ORM)
   Prisma Accelerate: Connection pooling
-  
+
 Edge Storage:
   Workers KV: Key-value store
   R2: Object storage
   D1: SQLite at the edge
   Durable Objects: Stateful workers
-  
+
 Authentication:
   Jose: JWT handling in Workers
   Web Crypto API: Native crypto
-  
+
 API Design:
   REST: Primary API style
   GraphQL: Complex queries (optional)
   tRPC: Type-safe APIs
-  
+
 Data Processing:
   Apache Arrow: Columnar data
   DuckDB WASM: In-browser analytics
@@ -336,27 +336,27 @@ Deployment Platform:
   Cloudflare Pages: Frontend hosting
   Cloudflare Workers: Backend compute
   Wrangler: CLI deployment tool
-  
+
 Database Hosting:
-  Neon: Serverless PostgreSQL
+  Azure: Serverless PostgreSQL
   # Alternative: Supabase, PlanetScale
-  
+
 CI/CD Pipeline:
   GitHub Actions: Primary CI/CD
   Cloudflare Pages: Auto-deploy
-  
+
 Monitoring & Observability:
   Cloudflare Analytics: Built-in metrics
   Sentry: Error tracking
   LogDNA: Log aggregation
   # Alternative: Datadog
-  
+
 Testing Infrastructure:
   Vitest: Unit tests
   Playwright: E2E tests
   MSW: API mocking
   Faker.js: Test data generation
-  
+
 Security & Compliance:
   Cloudflare WAF: Web application firewall
   Cloudflare Access: Zero Trust
@@ -372,21 +372,21 @@ IDE & Extensions:
   GitHub Copilot: AI assistance
   Prettier: Code formatting
   ESLint: Linting
-  
+
 Version Control:
   Git: Source control
   GitHub: Repository hosting
   Conventional Commits: Commit standards
-  
+
 Package Management:
   pnpm: Fast, disk-efficient
   Turborepo: Monorepo management
-  
+
 Documentation:
   Mintlify: API documentation
   Docusaurus: Product docs
   Mermaid: Diagrams
-  
+
 Collaboration:
   Linear: Issue tracking
   Slack: Team communication
@@ -436,18 +436,18 @@ Essential Services (Day 1):
     - R2 Storage: $0.015/GB/month
     - D1 Database: Free tier initially
     - Pages: Free for team
-    
+
   Database:
-    - Neon: $19/month starter
+    - Azure: $19/month starter
     # Alternative: Supabase ($25/month)
-    
+
   Authentication:
     - Google Cloud Console: OAuth setup (free)
     - Microsoft Azure AD: App registration (free)
-    
+
   Payments:
     - Stripe: 2.9% + 30¢ per transaction
-    
+
   Domain & Email:
     - Domain registration: ~$15/year
     - Google Workspace: $6/user/month
@@ -456,11 +456,11 @@ Development Tools:
   GitHub:
     - Team Plan: $4/user/month
     - Actions: 2,000 minutes free
-    
+
   Monitoring:
     - Sentry: $26/month team plan
     - LogDNA: $30/month starter
-    
+
   Design:
     - Figma: $15/user/month
     - Tailwind UI: $299 one-time
@@ -479,12 +479,12 @@ Cloud Provider APIs (Required):
     - Cost Explorer API
     - Organizations API
     - IAM for cross-account
-    
+
   Azure:
     - Cost Management API
     - Consumption API
     - Azure AD for auth
-    
+
   GCP:
     - Cloud Billing API
     - Resource Manager API
@@ -494,15 +494,15 @@ Integration APIs (Optional):
   Slack:
     - Incoming webhooks
     - Slack App (OAuth)
-    
+
   Microsoft Teams:
     - Incoming webhooks
     - Graph API
-    
+
   Jira:
     - REST API
     - Webhooks
-    
+
   ServiceNow:
     - REST API
     - OAuth 2.0
@@ -577,12 +577,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      
+
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-      
+
   mailhog:
     image: mailhog/mailhog
     ports:
@@ -606,7 +606,7 @@ Month 1 - Core Infrastructure:
     - Configure CI/CD pipeline
     - Initialize monorepo structure
     - Set up Cloudflare account
-    
+
   Week 3-4:
     - Implement authentication (OAuth)
     - Create database schema
@@ -619,7 +619,7 @@ Month 2 - Data Pipeline:
     - FOCUS data normalization
     - Cost ingestion pipeline
     - Basic allocation engine
-    
+
   Week 7-8:
     - Workers KV session management
     - API rate limiting
@@ -632,7 +632,7 @@ Month 3 - Core Features:
     - Cost trend visualization
     - Basic reporting
     - CSV export
-    
+
   Week 11-12:
     - Budget management
     - Alert system
@@ -726,7 +726,7 @@ Certifications Target:
     - SOC 2 Type I
     - GDPR compliance
     - CCPA compliance
-    
+
   Year 2:
     - SOC 2 Type II
     - ISO 27001
@@ -802,14 +802,14 @@ Data Partitioning:
 ```yaml
 Development Environment:
   - Cloudflare Workers: $5
-  - Neon Database: $19
+  - Azure Database: $19
   - GitHub Team: $20
   - Domain/Email: $50
   - Total: ~$100/month
 
 Production (100 customers):
   - Cloudflare Workers: $200
-  - Database (Neon Pro): $100
+  - Database (Azure Postgresql): $100
   - R2 Storage: $50
   - Monitoring: $60
   - Total: ~$500/month
@@ -858,27 +858,27 @@ Marketing & Sales:
 High Priority:
   - Cloud provider API changes
     Mitigation: Abstraction layer, versioning
-    
+
   - Data accuracy issues
     Mitigation: Reconciliation, validation
-    
+
   - Scalability bottlenecks
     Mitigation: Load testing, auto-scaling
 
 Medium Priority:
   - Vendor lock-in (Cloudflare)
     Mitigation: Portable architecture
-    
+
   - Security breaches
     Mitigation: Security audits, pen testing
-    
+
   - Performance degradation
     Mitigation: Monitoring, optimization
 
 Low Priority:
   - Technology obsolescence
     Mitigation: Regular updates, refactoring
-    
+
   - Integration failures
     Mitigation: Retry logic, circuit breakers
 ```
@@ -1023,10 +1023,10 @@ Learning Resources:
 
 ## Document Control
 
-**Version**: 1.0  
-**Last Updated**: September 30, 2025  
-**Next Review**: October 31, 2025  
-**Owner**: Product & Engineering Team  
+**Version**: 1.0
+**Last Updated**: September 30, 2025
+**Next Review**: October 31, 2025
+**Owner**: Product & Engineering Team
 **Status**: Living Document
 
 ### Revision History
